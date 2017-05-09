@@ -109,12 +109,14 @@ public abstract class WebProcessor extends Processor<WebCommand, HttpResponse> {
     }
 
     protected ViewHttpResponse createViewResponse(String viewName) {
-        return createViewResponse(HttpResponseCode.HTTP_OK, viewName);
+        ViewHttpResponse templateResponse = new ViewHttpResponse(createView(viewName));
+        templateResponse.setResponseCode(HttpResponseCode.HTTP_OK);
+        return templateResponse;
     }
 
-    protected ViewHttpResponse createViewResponse(int responseCode, String viewName) {
-        ViewHttpResponse templateResponse = new ViewHttpResponse(createView(viewName));
-        templateResponse.setResponseCode(responseCode);
+    protected ViewHttpResponse createViewResponse(String viewFactoryName, String viewName) {
+        ViewHttpResponse templateResponse = new ViewHttpResponse(createView(viewFactoryName, viewName));
+        templateResponse.setResponseCode(HttpResponseCode.HTTP_OK);
         return templateResponse;
     }
 
