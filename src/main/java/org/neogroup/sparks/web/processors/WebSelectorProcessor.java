@@ -12,25 +12,25 @@ import java.util.Map;
 @ProcessorComponent(commands = {WebCommand.class})
 public class WebSelectorProcessor extends SelectorProcessor<WebCommand, WebProcessor> {
 
-    private final Map<String, WebProcessor> processorsByRoute;
+    private final Map<String, Class<? extends WebProcessor>> processorsByRoute;
 
     public WebSelectorProcessor() {
         this.processorsByRoute = new HashMap<>();
     }
 
     @Override
-    public boolean registerProcessorCandidate(WebProcessor processor) {
+    public boolean registerProcessorClass(Class<? extends WebProcessor> webProcessorClass) {
         boolean registered = false;
-        Route webRoute = processor.getClass().getAnnotation(Route.class);
+        Route webRoute = webProcessorClass.getAnnotation(Route.class);
         if (webRoute != null) {
-            processorsByRoute.put(webRoute.path(), processor);
+            processorsByRoute.put(webRoute.path(), webProcessorClass);
             registered = true;
         }
         return registered;
     }
 
     @Override
-    public WebProcessor getProcessor(WebCommand command) {
+    protected Class<? extends WebProcessor> getProcessorClass(WebCommand command) {
         return processorsByRoute.get(command.getWebRoute());
     }
 }
