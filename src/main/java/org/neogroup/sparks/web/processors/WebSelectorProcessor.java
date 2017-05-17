@@ -9,15 +9,26 @@ import org.neogroup.sparks.web.routing.Route;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Web processor selector
+ */
 @ProcessorComponent(commands = {WebCommand.class})
 public class WebSelectorProcessor extends SelectorProcessor<WebCommand, WebProcessor> {
 
     private final Map<String, Class<? extends WebProcessor>> processorsByRoute;
 
+    /**
+     * Constructor for the web selector processor
+     */
     public WebSelectorProcessor() {
         this.processorsByRoute = new HashMap<>();
     }
 
+    /**
+     * Registers a web processor class
+     * @param webProcessorClass web processor class
+     * @return boolean
+     */
     @Override
     public boolean registerProcessorClass(Class<? extends WebProcessor> webProcessorClass) {
         boolean registered = false;
@@ -29,6 +40,11 @@ public class WebSelectorProcessor extends SelectorProcessor<WebCommand, WebProce
         return registered;
     }
 
+    /**
+     * Get a web processor class from a command
+     * @param command command
+     * @return web processor class
+     */
     @Override
     protected Class<? extends WebProcessor> getProcessorClass(WebCommand command) {
         return processorsByRoute.get(command.getWebRoute());
