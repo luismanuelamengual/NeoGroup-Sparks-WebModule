@@ -226,12 +226,12 @@ public abstract class WebProcessor extends Processor<WebCommand, HttpResponse> {
         }
 
         @Override
-        protected void writeBuffer() {
+        public void flush() {
             if (!viewRendered) {
                 setBody(view.render());
                 viewRendered = true;
             }
-            super.writeBuffer();
+            super.flush();
         }
     }
 }
