@@ -37,7 +37,8 @@ public class WebModule extends Module {
      */
     public WebModule(Application application, int port) {
         super(application);
-        server = new HttpServer(port);
+        server = new HttpServer();
+        server.setProperty("port", port);
         server.addContext(new HttpContext("/") {
             @Override
             public HttpResponse onContext(HttpRequest request) {
