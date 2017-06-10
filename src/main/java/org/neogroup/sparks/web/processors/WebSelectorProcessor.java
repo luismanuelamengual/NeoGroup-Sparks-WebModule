@@ -1,7 +1,7 @@
 
 package org.neogroup.sparks.web.processors;
 
-import org.neogroup.sparks.processors.ProcessorComponent;
+import org.neogroup.sparks.processors.ProcessorCommands;
 import org.neogroup.sparks.processors.SelectorProcessor;
 import org.neogroup.sparks.web.commands.WebCommand;
 import org.neogroup.sparks.web.routing.Route;
@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * Web processor selector
  */
-@ProcessorComponent(commands = {WebCommand.class})
+@ProcessorCommands({WebCommand.class})
 public class WebSelectorProcessor extends SelectorProcessor<WebCommand, WebProcessor> {
 
     private final Map<String, Class<? extends WebProcessor>> processorsByRoute;
