@@ -148,6 +148,9 @@ public class WebModule extends Module {
         return response;
     }
 
+    /**
+     * Register all the web routes from the web controllers
+     */
     protected void registerWebRoutes () {
 
         //Retrieve all processors visible from this module/application
@@ -191,6 +194,10 @@ public class WebModule extends Module {
         }
     }
 
+    /**
+     * Adds a new web route for a controller method
+     * @param route Route for controller method
+     */
     protected void addWebRoute (WebRouteEntry route) {
 
         String path = route.getPath();
@@ -220,6 +227,11 @@ public class WebModule extends Module {
         currentRootIndex.addRoute(route);
     }
 
+    /**
+     * Finds a web route from an http request
+     * @param request http request
+     * @return route for a controller method
+     */
     protected WebRouteEntry findWebRoute (HttpRequest request) {
 
         WebRouteEntry route = null;
