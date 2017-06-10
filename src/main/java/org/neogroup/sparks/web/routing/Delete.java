@@ -6,16 +6,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * Route to access a web processor
- */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface Route {
-
-    /**
-     * Path to access a web processor
-     * @return string
-     */
-    public String path();
+@Target(ElementType.METHOD)
+public @interface Delete {
+    public String value();
 }
