@@ -207,10 +207,6 @@ public class WebModule extends Module {
             if (pathPart.isEmpty()) {
                 continue;
             }
-            if (pathPart.equals(ROUTE_GENERIC_PATH)) {
-                currentRootIndex.addGenericRoute(route);
-                break;
-            }
             String index = null;
             if (pathPart.startsWith(ROUTE_PARAMETER_PREFIX)) {
                 index = ROUTE_PARAMETER_WILDCARD;
@@ -223,8 +219,17 @@ public class WebModule extends Module {
                 currentRootIndex.addRouteIndex(index, routeIndex);
             }
             currentRootIndex = routeIndex;
+            if (index.equals(ROUTE_GENERIC_PATH)) {
+                break;
+            }
         }
         currentRootIndex.addRoute(route);
+    }
+
+    protected WebRouteEntry findWebRoute (HttpRequest request) {
+
+        String[] pathParts = request.getPath().split(ROUTE_PATH_SEPARATOR);
+        return findWebRoute(request, routeIndex, pathParts, 0);
     }
 
     /**
@@ -232,35 +237,44 @@ public class WebModule extends Module {
      * @param request http request
      * @return route for a controller method
      */
-    protected WebRouteEntry findWebRoute (HttpRequest request) {
+    protected WebRouteEntry findWebRoute (HttpRequest request, WebRouteIndex currentRootIndex, String[] pathParts, int pathIndex) {
 
         WebRouteEntry route = null;
-        String[] pathParts = request.getPath().split(ROUTE_PATH_SEPARATOR);
-        WebRouteIndex currentRootIndex = routeIndex;
-        boolean routeFound = true;
-        for (String pathPart : pathParts) {
-            if (pathPart.isEmpty()) {
-                continue;
-            }
-            WebRouteIndex nextRootIndex = currentRootIndex.getRouteIndex(pathPart);
-            if (nextRootIndex == null) {
-                nextRootIndex = currentRootIndex.getRouteIndex(ROUTE_PARAMETER_WILDCARD);
-                if (nextRootIndex == null) {
-                    nextRootIndex = currentRootIndex.getRouteIndex(ROUTE_GENERIC_PATH);
-                    if (nextRootIndex == null) {
-                        routeFound = false;
-                        break;
-                    }
-                }
-            }
-            currentRootIndex = nextRootIndex;
-        }
-
-        if (routeFound) {
+        if (pathIndex >= pathParts.length) {
             for (WebRouteEntry routeEntry : currentRootIndex.getRoutes()) {
                 if (routeEntry.getHttpMethod() == null || routeEntry.getHttpMethod().equals(request.getMethod())) {
                     route = routeEntry;
                     break;
+                }
+            }
+            if (route == null) {
+                WebRouteIndex genericRouteIndex = currentRootIndex.getRouteIndex(ROUTE_GENERIC_PATH);
+                if (genericRouteIndex != null) {
+                    route = findWebRoute(request, genericRouteIndex, pathParts, pathParts.length);
+                }
+            }
+        }
+        else {
+            String pathPart = pathParts[pathIndex];
+            if (pathPart.isEmpty()) {
+                route = findWebRoute(request, currentRootIndex, pathParts, pathIndex + 1);
+            }
+            else {
+                WebRouteIndex nextRootIndex = currentRootIndex.getRouteIndex(pathPart);
+                if (nextRootIndex != null) {
+                    route = findWebRoute(request, nextRootIndex, pathParts, pathIndex + 1);
+                }
+                if (route == null) {
+                    nextRootIndex = currentRootIndex.getRouteIndex(ROUTE_PARAMETER_WILDCARD);
+                    if (nextRootIndex != null) {
+                        route = findWebRoute(request, nextRootIndex, pathParts, pathIndex + 1);
+                    }
+                }
+                if (route == null) {
+                    nextRootIndex = currentRootIndex.getRouteIndex(ROUTE_GENERIC_PATH);
+                    if (nextRootIndex != null) {
+                        route = findWebRoute(request, nextRootIndex, pathParts, pathParts.length);
+                    }
                 }
             }
         }

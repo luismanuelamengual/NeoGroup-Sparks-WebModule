@@ -8,12 +8,10 @@ import java.util.Map;
 
 public class WebRouteIndex {
 
-    private List<WebRouteEntry> genericRoutes;
     private List<WebRouteEntry> routes;
     private Map<String, WebRouteIndex> routeIndexes;
 
     public WebRouteIndex() {
-        genericRoutes = new ArrayList<>();
         routes = new ArrayList<>();
         routeIndexes = new HashMap<>();
     }
@@ -24,14 +22,6 @@ public class WebRouteIndex {
 
     public void addRoute(WebRouteEntry route) {
         routes.add(route);
-    }
-
-    public List<WebRouteEntry> getGenericRoutes() {
-        return genericRoutes;
-    }
-
-    public void addGenericRoute(WebRouteEntry route) {
-        genericRoutes.add(route);
     }
 
     public void addRouteIndex (String context, WebRouteIndex index) {
