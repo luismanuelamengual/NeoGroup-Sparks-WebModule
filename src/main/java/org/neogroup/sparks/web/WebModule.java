@@ -200,39 +200,57 @@ public class WebModule extends Module {
                 for (Method method : webProcessorClass.getDeclaredMethods()) {
                     Get getAnnotation = method.getAnnotation(Get.class);
                     if (getAnnotation != null) {
-                        routes.addWebRoute(new WebRouteEntry("GET", getAnnotation.value(), webProcessorClass, method));
+                        for (String path : getAnnotation.value()) {
+                            routes.addWebRoute(new WebRouteEntry("GET", path, webProcessorClass, method));
+                        }
                     }
                     Post postAnnotation = method.getAnnotation(Post.class);
                     if (postAnnotation != null) {
-                        routes.addWebRoute(new WebRouteEntry("POST", postAnnotation.value(), webProcessorClass, method));
+                        for (String path : postAnnotation.value()) {
+                            routes.addWebRoute(new WebRouteEntry("POST", path, webProcessorClass, method));
+                        }
                     }
                     Put putAnnotation = method.getAnnotation(Put.class);
                     if (putAnnotation != null) {
-                        routes.addWebRoute(new WebRouteEntry("PUT", putAnnotation.value(), webProcessorClass, method));
+                        for (String path : putAnnotation.value()) {
+                            routes.addWebRoute(new WebRouteEntry("PUT", path, webProcessorClass, method));
+                        }
                     }
                     Delete deleteAnnotation = method.getAnnotation(Delete.class);
                     if (deleteAnnotation != null) {
-                        routes.addWebRoute(new WebRouteEntry("DELETE", deleteAnnotation.value(), webProcessorClass, method));
+                        for (String path : deleteAnnotation.value()) {
+                            routes.addWebRoute(new WebRouteEntry("DELETE", path, webProcessorClass, method));
+                        }
                     }
                     Route routeAnnotation = method.getAnnotation(Route.class);
                     if (routeAnnotation != null) {
-                        routes.addWebRoute(new WebRouteEntry(null, routeAnnotation.value(), webProcessorClass, method));
+                        for (String path : routeAnnotation.value()) {
+                            routes.addWebRoute(new WebRouteEntry(null, path, webProcessorClass, method));
+                        }
                     }
                     Before beforeAnnotation = method.getAnnotation(Before.class);
                     if (beforeAnnotation != null) {
-                        beforeRoutes.addWebRoute(new WebRouteEntry(null, beforeAnnotation.value(), webProcessorClass, method));
+                        for (String path : beforeAnnotation.value()) {
+                            beforeRoutes.addWebRoute(new WebRouteEntry(null, path, webProcessorClass, method));
+                        }
                     }
                     After afterAnnotation = method.getAnnotation(After.class);
                     if (afterAnnotation != null) {
-                        afterRoutes.addWebRoute(new WebRouteEntry(null, afterAnnotation.value(), webProcessorClass, method));
+                        for (String path : afterAnnotation.value()) {
+                            afterRoutes.addWebRoute(new WebRouteEntry(null, path, webProcessorClass, method));
+                        }
                     }
                     Error errorAnnotation = method.getAnnotation(Error.class);
                     if (errorAnnotation != null) {
-                        errorRoutes.addWebRoute(new WebRouteEntry(null, errorAnnotation.value(), webProcessorClass, method));
+                        for (String path : errorAnnotation.value()) {
+                            errorRoutes.addWebRoute(new WebRouteEntry(null, path, webProcessorClass, method));
+                        }
                     }
                     NotFound notFoundAnnotation = method.getAnnotation(NotFound.class);
                     if (notFoundAnnotation != null) {
-                        notFoundRoutes.addWebRoute(new WebRouteEntry(null, notFoundAnnotation.value(), webProcessorClass, method));
+                        for (String path : notFoundAnnotation.value()) {
+                            notFoundRoutes.addWebRoute(new WebRouteEntry(null, path, webProcessorClass, method));
+                        }
                     }
                 }
             }
