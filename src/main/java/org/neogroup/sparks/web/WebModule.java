@@ -8,6 +8,7 @@ import org.neogroup.sparks.Module;
 import org.neogroup.sparks.processors.Processor;
 import org.neogroup.sparks.web.processors.WebProcessor;
 import org.neogroup.sparks.web.routing.*;
+import org.neogroup.sparks.web.routing.Error;
 import org.neogroup.util.MimeUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -28,6 +29,8 @@ public class WebModule extends Module {
     private final WebRoutes routes;
     private final WebRoutes beforeRoutes;
     private final WebRoutes afterRoutes;
+    private final WebRoutes notFoundRoutes;
+    private final WebRoutes errorRoutes;
 
     /**
      * Constructor for the web module
@@ -47,6 +50,8 @@ public class WebModule extends Module {
         routes = new WebRoutes();
         beforeRoutes = new WebRoutes();
         afterRoutes = new WebRoutes();
+        notFoundRoutes = new WebRoutes();
+        errorRoutes = new WebRoutes();
         server = new HttpServer();
         server.setProperty("port", port);
         server.addContext(new HttpContext("/") {
@@ -123,10 +128,22 @@ public class WebModule extends Module {
      * @return http response
      */
     protected HttpResponse onRouteNotFound (HttpRequest request) {
+
+        WebRouteEntry notFoundRoute = notFoundRoutes.findWebRoute(request);
         HttpResponse response = new HttpResponse();
-        response.setResponseCode(HttpResponseCode.HTTP_NOT_FOUND);
-        response.addHeader(HttpHeader.CONTENT_TYPE, MimeUtils.TEXT_PLAIN);
-        response.setBody("No route found for path \"" + request.getPath() + "\" !!");
+        if (notFoundRoute != null) {
+            try {
+                response = (HttpResponse) notFoundRoute.getProcessorMethod().invoke(getProcessorInstance(notFoundRoute.getProcessorClass()), request);
+            }
+            catch (Throwable error) {
+                throw new RuntimeException("Error processing not found route !!");
+            }
+        }
+        else {
+            response.setResponseCode(HttpResponseCode.HTTP_NOT_FOUND);
+            response.addHeader(HttpHeader.CONTENT_TYPE, MimeUtils.TEXT_PLAIN);
+            response.setBody("No route found for path \"" + request.getPath() + "\" !!");
+        }
         return response;
     }
 
@@ -137,14 +154,32 @@ public class WebModule extends Module {
      * @return http response
      */
     protected HttpResponse onError (HttpRequest request, Throwable throwable) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        PrintStream printer = new PrintStream(out);
-        throwable.printStackTrace(printer);
-        byte[] body = out.toByteArray();
+
+        WebRouteEntry errorRoute = errorRoutes.findWebRoute(request);
         HttpResponse response = new HttpResponse();
-        response.setResponseCode(HttpResponseCode.HTTP_INTERNAL_ERROR);
-        response.addHeader(HttpHeader.CONTENT_TYPE, MimeUtils.TEXT_PLAIN);
-        response.setBody(body);
+        if (errorRoute != null) {
+            try {
+                response = (HttpResponse) errorRoute.getProcessorMethod().invoke(getProcessorInstance(errorRoute.getProcessorClass()), request, throwable);
+            }
+            catch (Throwable routeError) {
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                PrintStream printer = new PrintStream(out);
+                routeError.printStackTrace(printer);
+                byte[] body = out.toByteArray();
+                response.setResponseCode(HttpResponseCode.HTTP_INTERNAL_ERROR);
+                response.addHeader(HttpHeader.CONTENT_TYPE, MimeUtils.TEXT_PLAIN);
+                response.setBody(body);
+            }
+        }
+        else {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            PrintStream printer = new PrintStream(out);
+            throwable.printStackTrace(printer);
+            byte[] body = out.toByteArray();
+            response.setResponseCode(HttpResponseCode.HTTP_INTERNAL_ERROR);
+            response.addHeader(HttpHeader.CONTENT_TYPE, MimeUtils.TEXT_PLAIN);
+            response.setBody(body);
+        }
         return response;
     }
 
@@ -190,6 +225,14 @@ public class WebModule extends Module {
                     After afterAnnotation = method.getAnnotation(After.class);
                     if (afterAnnotation != null) {
                         afterRoutes.addWebRoute(new WebRouteEntry(null, afterAnnotation.value(), webProcessorClass, method));
+                    }
+                    Error errorAnnotation = method.getAnnotation(Error.class);
+                    if (errorAnnotation != null) {
+                        errorRoutes.addWebRoute(new WebRouteEntry(null, errorAnnotation.value(), webProcessorClass, method));
+                    }
+                    NotFound notFoundAnnotation = method.getAnnotation(NotFound.class);
+                    if (notFoundAnnotation != null) {
+                        notFoundRoutes.addWebRoute(new WebRouteEntry(null, notFoundAnnotation.value(), webProcessorClass, method));
                     }
                 }
             }
