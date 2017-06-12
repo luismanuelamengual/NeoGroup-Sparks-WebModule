@@ -12,6 +12,7 @@ import org.neogroup.util.MimeUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
@@ -23,13 +24,8 @@ public class WebModule extends Module {
 
     public static final int DEFAULT_SERVER_PORT = 80;
 
-    private static final String ROUTE_GENERIC_PATH = "*";
-    private static final String ROUTE_PARAMETER_PREFIX = ":";
-    private static final String ROUTE_PARAMETER_WILDCARD = "%";
-    private static final String ROUTE_PATH_SEPARATOR = "/";
-
     private final HttpServer server;
-    private final WebRouteIndex routeIndex;
+    private final WebRoutes routes;
 
     /**
      * Constructor for the web module
@@ -46,35 +42,25 @@ public class WebModule extends Module {
      */
     public WebModule(Application application, int port) {
         super(application);
-        routeIndex = new WebRouteIndex();
+        routes = new WebRoutes();
         server = new HttpServer();
         server.setProperty("port", port);
         server.addContext(new HttpContext("/") {
             @Override
             public HttpResponse onContext(HttpRequest request) {
-                WebRouteEntry webRoute = findWebRoute(request);
+                WebRouteEntry webRoute = routes.findWebRoute(request);
                 HttpResponse response = null;
                 try {
                     if (webRoute != null) {
-
-                        if (webRoute.getPath().contains(ROUTE_PARAMETER_PREFIX)) {
-                            String[] pathParts = webRoute.getPath().split(ROUTE_PATH_SEPARATOR);
-                            String[] requestParts = request.getPath().split(ROUTE_PATH_SEPARATOR);
-                            for (int i = 0; i < pathParts.length; i++) {
-                                String pathPart = pathParts[i];
-                                if (pathPart.startsWith(ROUTE_PARAMETER_PREFIX)) {
-                                    String parameterName = pathPart.substring(1);
-                                    String parameterValue = requestParts[i];
-                                    request.setParameter(parameterName, parameterValue);
-                                }
-                            }
-                        }
-
                         Class<? extends WebProcessor> webProcessorClass = webRoute.getProcessorClass();
                         response = (HttpResponse)webRoute.getProcessorMethod().invoke(getProcessorInstance(webProcessorClass), request);
-                    } else {
+                    }
+                    else {
                         response = onRouteNotFound(request);
                     }
+                }
+                catch (InvocationTargetException invocationException) {
+                    response = onError(request, invocationException.getCause());
                 }
                 catch (Throwable throwable) {
                     response = onError(request, throwable);
@@ -165,119 +151,27 @@ public class WebModule extends Module {
                 for (Method method : webProcessorClass.getDeclaredMethods()) {
                     Get getAnnotation = method.getAnnotation(Get.class);
                     if (getAnnotation != null) {
-                        WebRouteEntry route = new WebRouteEntry("GET", getAnnotation.value(), webProcessorClass, method);
-                        addWebRoute(route);
+                        routes.addWebRoute(new WebRouteEntry("GET", getAnnotation.value(), webProcessorClass, method));
                     }
                     Post postAnnotation = method.getAnnotation(Post.class);
                     if (postAnnotation != null) {
-                        WebRouteEntry route = new WebRouteEntry("POST", postAnnotation.value(), webProcessorClass, method);
-                        addWebRoute(route);
+                        routes.addWebRoute(new WebRouteEntry("POST", postAnnotation.value(), webProcessorClass, method));
                     }
                     Put putAnnotation = method.getAnnotation(Put.class);
                     if (putAnnotation != null) {
-                        WebRouteEntry route = new WebRouteEntry("PUT", putAnnotation.value(), webProcessorClass, method);
-                        addWebRoute(route);
+                        routes.addWebRoute(new WebRouteEntry("PUT", putAnnotation.value(), webProcessorClass, method));
                     }
                     Delete deleteAnnotation = method.getAnnotation(Delete.class);
                     if (deleteAnnotation != null) {
-                        WebRouteEntry route = new WebRouteEntry("DELETE", deleteAnnotation.value(), webProcessorClass, method);
-                        addWebRoute(route);
+                        routes.addWebRoute(new WebRouteEntry("DELETE", deleteAnnotation.value(), webProcessorClass, method));
                     }
                     Request requestAnnotation = method.getAnnotation(Request.class);
                     if (requestAnnotation != null) {
-                        WebRouteEntry route = new WebRouteEntry(null, requestAnnotation.value(), webProcessorClass, method);
-                        addWebRoute(route);
+                        routes.addWebRoute(new WebRouteEntry(null, requestAnnotation.value(), webProcessorClass, method));
                     }
                 }
             }
             catch (ClassCastException ex) {}
         }
-    }
-
-    /**
-     * Adds a new web route for a controller method
-     * @param route Route for controller method
-     */
-    protected void addWebRoute (WebRouteEntry route) {
-
-        String path = route.getPath();
-        String[] pathParts = path.split(ROUTE_PATH_SEPARATOR);
-        WebRouteIndex currentRootIndex = routeIndex;
-        for (String pathPart : pathParts) {
-            if (pathPart.isEmpty()) {
-                continue;
-            }
-            String index = null;
-            if (pathPart.startsWith(ROUTE_PARAMETER_PREFIX)) {
-                index = ROUTE_PARAMETER_WILDCARD;
-            } else {
-                index = pathPart;
-            }
-            WebRouteIndex routeIndex = currentRootIndex.getRouteIndex(index);
-            if (routeIndex == null) {
-                routeIndex = new WebRouteIndex();
-                currentRootIndex.addRouteIndex(index, routeIndex);
-            }
-            currentRootIndex = routeIndex;
-            if (index.equals(ROUTE_GENERIC_PATH)) {
-                break;
-            }
-        }
-        currentRootIndex.addRoute(route);
-    }
-
-    protected WebRouteEntry findWebRoute (HttpRequest request) {
-
-        String[] pathParts = request.getPath().split(ROUTE_PATH_SEPARATOR);
-        return findWebRoute(request, routeIndex, pathParts, 0);
-    }
-
-    /**
-     * Finds a web route from an http request
-     * @param request http request
-     * @return route for a controller method
-     */
-    protected WebRouteEntry findWebRoute (HttpRequest request, WebRouteIndex currentRootIndex, String[] pathParts, int pathIndex) {
-
-        WebRouteEntry route = null;
-        if (pathIndex >= pathParts.length) {
-            for (WebRouteEntry routeEntry : currentRootIndex.getRoutes()) {
-                if (routeEntry.getHttpMethod() == null || routeEntry.getHttpMethod().equals(request.getMethod())) {
-                    route = routeEntry;
-                    break;
-                }
-            }
-            if (route == null) {
-                WebRouteIndex genericRouteIndex = currentRootIndex.getRouteIndex(ROUTE_GENERIC_PATH);
-                if (genericRouteIndex != null) {
-                    route = findWebRoute(request, genericRouteIndex, pathParts, pathParts.length);
-                }
-            }
-        }
-        else {
-            String pathPart = pathParts[pathIndex];
-            if (pathPart.isEmpty()) {
-                route = findWebRoute(request, currentRootIndex, pathParts, pathIndex + 1);
-            }
-            else {
-                WebRouteIndex nextRootIndex = currentRootIndex.getRouteIndex(pathPart);
-                if (nextRootIndex != null) {
-                    route = findWebRoute(request, nextRootIndex, pathParts, pathIndex + 1);
-                }
-                if (route == null) {
-                    nextRootIndex = currentRootIndex.getRouteIndex(ROUTE_PARAMETER_WILDCARD);
-                    if (nextRootIndex != null) {
-                        route = findWebRoute(request, nextRootIndex, pathParts, pathIndex + 1);
-                    }
-                }
-                if (route == null) {
-                    nextRootIndex = currentRootIndex.getRouteIndex(ROUTE_GENERIC_PATH);
-                    if (nextRootIndex != null) {
-                        route = findWebRoute(request, nextRootIndex, pathParts, pathParts.length);
-                    }
-                }
-            }
-        }
-        return route;
     }
 }
