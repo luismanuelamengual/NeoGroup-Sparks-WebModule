@@ -165,9 +165,9 @@ public class WebModule extends Module {
                     if (deleteAnnotation != null) {
                         routes.addWebRoute(new WebRouteEntry("DELETE", deleteAnnotation.value(), webProcessorClass, method));
                     }
-                    Request requestAnnotation = method.getAnnotation(Request.class);
-                    if (requestAnnotation != null) {
-                        routes.addWebRoute(new WebRouteEntry(null, requestAnnotation.value(), webProcessorClass, method));
+                    Route routeAnnotation = method.getAnnotation(Route.class);
+                    if (routeAnnotation != null) {
+                        routes.addWebRoute(new WebRouteEntry(null, routeAnnotation.value(), webProcessorClass, method));
                     }
                 }
             }
