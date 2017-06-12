@@ -26,6 +26,8 @@ public class WebModule extends Module {
 
     private final HttpServer server;
     private final WebRoutes routes;
+    private final WebRoutes beforeRoutes;
+    private final WebRoutes afterRoutes;
 
     /**
      * Constructor for the web module
@@ -43,6 +45,8 @@ public class WebModule extends Module {
     public WebModule(Application application, int port) {
         super(application);
         routes = new WebRoutes();
+        beforeRoutes = new WebRoutes();
+        afterRoutes = new WebRoutes();
         server = new HttpServer();
         server.setProperty("port", port);
         server.addContext(new HttpContext("/") {
@@ -52,8 +56,18 @@ public class WebModule extends Module {
                 HttpResponse response = null;
                 try {
                     if (webRoute != null) {
-                        Class<? extends WebProcessor> webProcessorClass = webRoute.getProcessorClass();
-                        response = (HttpResponse)webRoute.getProcessorMethod().invoke(getProcessorInstance(webProcessorClass), request);
+                        WebRouteEntry beforeWebRoute = beforeRoutes.findWebRoute(request);
+                        if (beforeWebRoute != null) {
+                            response = (HttpResponse) beforeWebRoute.getProcessorMethod().invoke(getProcessorInstance(beforeWebRoute.getProcessorClass()), request);
+                        }
+                        if (response == null) {
+                            response = (HttpResponse) webRoute.getProcessorMethod().invoke(getProcessorInstance(webRoute.getProcessorClass()), request);
+
+                            WebRouteEntry afterWebRoute = afterRoutes.findWebRoute(request);
+                            if (afterWebRoute != null) {
+                                response = (HttpResponse) afterWebRoute.getProcessorMethod().invoke(getProcessorInstance(afterWebRoute.getProcessorClass()), request, response);
+                            }
+                        }
                     }
                     else {
                         response = onRouteNotFound(request);
@@ -168,6 +182,14 @@ public class WebModule extends Module {
                     Route routeAnnotation = method.getAnnotation(Route.class);
                     if (routeAnnotation != null) {
                         routes.addWebRoute(new WebRouteEntry(null, routeAnnotation.value(), webProcessorClass, method));
+                    }
+                    Before beforeAnnotation = method.getAnnotation(Before.class);
+                    if (beforeAnnotation != null) {
+                        beforeRoutes.addWebRoute(new WebRouteEntry(null, beforeAnnotation.value(), webProcessorClass, method));
+                    }
+                    After afterAnnotation = method.getAnnotation(After.class);
+                    if (afterAnnotation != null) {
+                        afterRoutes.addWebRoute(new WebRouteEntry(null, afterAnnotation.value(), webProcessorClass, method));
                     }
                 }
             }
