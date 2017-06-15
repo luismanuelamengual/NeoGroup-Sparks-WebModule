@@ -1,6 +1,7 @@
 
 package org.neogroup.sparks.web.processors;
 
+import org.neogroup.httpserver.HttpMethod;
 import org.neogroup.httpserver.HttpRequest;
 import org.neogroup.httpserver.HttpResponse;
 import org.neogroup.sparks.Application;
@@ -56,25 +57,25 @@ public class WebCommandProcessor extends CommandProcessor<WebCommand> {
                     Get getAnnotation = method.getAnnotation(Get.class);
                     if (getAnnotation != null) {
                         for (String path : getAnnotation.value()) {
-                            routes.addRoute(new RouteEntry("GET", path, webProcessor, method));
+                            routes.addRoute(new RouteEntry(HttpMethod.GET, path, webProcessor, method));
                         }
                     }
                     Post postAnnotation = method.getAnnotation(Post.class);
                     if (postAnnotation != null) {
                         for (String path : postAnnotation.value()) {
-                            routes.addRoute(new RouteEntry("POST", path, webProcessor, method));
+                            routes.addRoute(new RouteEntry(HttpMethod.POST, path, webProcessor, method));
                         }
                     }
                     Put putAnnotation = method.getAnnotation(Put.class);
                     if (putAnnotation != null) {
                         for (String path : putAnnotation.value()) {
-                            routes.addRoute(new RouteEntry("PUT", path, webProcessor, method));
+                            routes.addRoute(new RouteEntry(HttpMethod.PUT, path, webProcessor, method));
                         }
                     }
                     Delete deleteAnnotation = method.getAnnotation(Delete.class);
                     if (deleteAnnotation != null) {
                         for (String path : deleteAnnotation.value()) {
-                            routes.addRoute(new RouteEntry("DELETE", path, webProcessor, method));
+                            routes.addRoute(new RouteEntry(HttpMethod.DELETE, path, webProcessor, method));
                         }
                     }
                     Route routeAnnotation = method.getAnnotation(Route.class);
