@@ -12,15 +12,7 @@ import org.neogroup.util.MimeUtils;
 /**
  * Web processor for the sparks web module
  */
-public abstract class WebProcessor extends Processor<Command, Object> {
-
-    /**
-     * Processes a web command
-     * @param command command to process
-     * @return http response
-     */
-    @Override
-    public final Object process(Command command) {return null;}
+public abstract class WebProcessor extends Processor {
 
     /**
      * Creates a response

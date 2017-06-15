@@ -1,21 +1,21 @@
 
-package org.neogroup.sparks.web;
+package org.neogroup.sparks.web.routing;
 
 import org.neogroup.sparks.web.processors.WebProcessor;
 
 import java.lang.reflect.Method;
 
-public class WebRouteEntry {
+public class RouteEntry {
 
     private final String httpMethod;
     private final String path;
-    private final Class<? extends WebProcessor> processorClass;
+    private final WebProcessor processor;
     private final Method processorMethod;
 
-    public WebRouteEntry(String httpMethod, String path, Class<? extends WebProcessor> processorClass, Method processorMethod) {
+    public RouteEntry(String httpMethod, String path, WebProcessor processor, Method processorMethod) {
         this.httpMethod = httpMethod;
         this.path = path;
-        this.processorClass = processorClass;
+        this.processor = processor;
         this.processorMethod = processorMethod;
     }
 
@@ -27,8 +27,8 @@ public class WebRouteEntry {
         return path;
     }
 
-    public Class<? extends WebProcessor> getProcessorClass() {
-        return processorClass;
+    public WebProcessor getProcessor() {
+        return processor;
     }
 
     public Method getProcessorMethod() {
