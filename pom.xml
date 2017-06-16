@@ -41,6 +41,25 @@
             <artifactId>NeoGroup-HttpServer</artifactId>
             <version>1.2.0-SNAPSHOT</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.github.luismanuelamengual</groupId>
+            <artifactId>NeoGroup-Sparks-VelocityViewFactory</artifactId>
+            <version>1.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.luismanuelamengual</groupId>
+            <artifactId>NeoGroup-Sparks-FreemarkerViewFactory</artifactId>
+            <version>1.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>9.4.1211</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <scm>
